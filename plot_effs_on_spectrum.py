@@ -32,28 +32,25 @@ print("N protons in SK = %f\n" % n_p_sk)
 # and put the number here
 # but that aint how I roll
 
-tnu_sum = 0
-energies = []
-tnus = []
+
+geo_data = [] 
 
 with open (sys.argv[1]) as in_file:
     reader = csv.reader(in_file)
-    in_file.readline()
     for row in reader:
-        energies.append(float(row[0]))
-        tnus.append(float(row[1]))
-        tnu_sum+=float(row[1])
+        dat_row = []
+        for data in row:
+            dat_row.append(float(data))
+        geo_data.append(dat_row[:])
+        del dat_row[:]
 
-# My naming convention is all over the place here lol
-positron_effs = []
-gamma_effs = []
-positron_effs_def = []
-gamma_effs_def = []
+geo_sums = []
+geo_sums = [sum(x) for x in zip(*geo_data)]
 
-pair_effs = []
-pair_effs_err = []
-pair_effs_def = []
-pair_effs_err_def = []
+
+eff_data = []
+
+# Efficiencies don't have energies in them, add in here instead
 energies_effs = []
 emin_effs = 1.8
 emax_effs = 10
@@ -62,39 +59,62 @@ e_interval_effs = (emax_effs - emin_effs)/n_files
 energy_effs = emin_effs
 with open (sys.argv[2]) as in_file:
     reader = csv.reader(in_file)
-    in_file.readline()
     for row in reader:
-        positron_effs_def.append(float(row[0]))
-        gamma_effs_def.append(float(row[1]))
-        positron_effs.append(float(row[2]))
-        gamma_effs.append(float(row[3]))
+        dat_row = []
+        for data in row:
+            dat_row.append(float(data))
+        eff_data.append(dat_row[:])
+        del dat_row[:]
 
-        pair_effs_def.append(float(row[4]))
-        pair_effs.append(float(row[5]))
-        pair_effs_err_def.append(float(row[6]))
-        pair_effs_err.append(float(row[7]))
         energies_effs.append(energy_effs)
         energy_effs+=e_interval_effs
 
-print("Total (TNU/(%f keV)) = %f\n" % (tnu_sum,width))
-print("Total (TNU) = %f\n" % (tnu_sum*width))
-print("Total (#interactions/y) = %f\n" % (tnu_sum*width*(n_p_sk/10e32)))
+effs_sums = []
+effs_sums = [sum(x) for x in zip(*eff_data)]
 
-# print(len(energies))
-# print(len(tnus))
-# print(len(pair_effs))
+# Geo neutrinos file format:
+# 0 - energy
+# 1 - total
+# 2 - all standard reactors
+# 3 - closest reactor
+# 4 - custom reactor
+# 5 - geo_u
+# 6 - geo_th
+
+# WIT effs data file format:
+# 0 - Default positron
+# 1 - Default gamma
+# 2 - Relaxed positron
+# 3 - Relaxed gamma
+# 4 - Default pairs
+# 5 - Relaxed pairs
+# 6 - Default pairs err
+# 7 - Relaxed pairs err
+
+print(geo_data[0])
+print(eff_data[0])
+
+print("Total (TNU/(%f keV)) = %f\n" % (geo_sums[1],width))
+print("Total (TNU) = %f\n" % (geo_sums[1]*width))
+print("Total (#interactions/y) = %f\n" % (geo_sums[1]*width*(n_p_sk/10e32)))
 
 fig, ax1 = plt.subplots()
 
-ax1.plot(energies,tnus, 'b-')
+geo_energy = [row[0] for row in geo_data]
+geo_reactor = [row[2]+row[4] for row in geo_data]
+geo_geo = [row[2]+row[4]+row[5]+row[6] for row in geo_data]
+ax1.plot(geo_energy,geo_geo,'y-')
+ax1.plot(geo_energy,geo_reactor, 'b-')
+ax1.fill_between(geo_energy,geo_reactor,geo_geo,color='yellow',alpha=0.5)
+ax1.fill_between(geo_energy,geo_reactor,[0]*len(geo_reactor),color='b',alpha=0.5)
 ax1.set_ylabel('Interaction rate/TNU', color='b')
 ax1.set_xlabel('Neutrino energy/MeV')
 
 ax2 = ax1.twinx()
 
 # ax2.errorbar(energies_effs, pair_effs, yerr=pair_effs_err, color='r')
-ax2.plot(energies_effs, pair_effs,'-r',label="IBD Pairs")
-ax2.plot(energies_effs, pair_effs_def,'--r',label="IBD Pairs (Old)")
+ax2.plot(energies_effs, [row[5] for row in eff_data],'-r',label="IBD Pairs")
+ax2.plot(energies_effs, [row[4] for row in eff_data],'--r',label="IBD Pairs (Old)")
 # ax2.plot(energies_effs, positron_effs_def,'-.r',label="Positron")
 # ax2.plot(energies_effs, gamma_effs_def,':r',label="Gamma")
 ax2.legend(loc='center right')
