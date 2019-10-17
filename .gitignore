@@ -1,0 +1,15 @@
+effs/
+old/
+pair_counts/
+plots/
+spectra/
+
+*.swp
+*.csv
+*.zip
+*.old
+co_23_may.csv.backup
+plot_effs_on_spectrum_pascos.py
+.DS_Store
+rolling_window_2.py
+rolling_window.py

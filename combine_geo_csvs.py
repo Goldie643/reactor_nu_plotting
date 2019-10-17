@@ -24,14 +24,13 @@ def pull_data(file_name):
                 return dat
             # Skipping line if string (header)
             try:
-                header_test = float(row[0])
+                for data in row:
+                    dat_row.append(float(data))
             except ValueError:
                 print('Skipping header..')
                 continue
-            for data in row:
-                dat_row.append(float(data))
             dat.append(dat_row[:])
-            dat_row.clear()
+            del dat_row[:]
     return dat
 
 if __name__ == '__main__':
